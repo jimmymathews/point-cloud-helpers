@@ -9,9 +9,11 @@ The main functions are
   - `PointCloud`'s `least_variable_spatial_coordinates(N)`, `most_variable_spatial_coordinates(N)`, etc.
   - `point_cloud_from_csvs(data_file, point_ids_file, coordinate_ids_file)`
   - `point_cloud_from_csv(filename)`
-  - `load_grouping(a csv file of identifier / grouping name pairs)`
+  - `point_cloud_to_csv(point_cloud, filename)` (writes labels as one column and one row)
+  - `point_cloud_to_csv_values_only(point_cloud, filename)` (omits all labels, just numerical values)
+  - `load_grouping(a filename for csv of identifier / grouping name pairs)`
 
-'Test code' follows each main chunk.
+Test code follows each main chunk.
 
 
 Usage
@@ -74,5 +76,11 @@ for g in grouping:
     print("")
 ```
 
+## Test saving new point clouds to CSV
 
-
+```
+pc = point_cloud_from_csv("test_data/full_data_set.csv", "samples", "properties")
+pc2 = pc.restrict_to(pc.most_variable_spatial_coordinates(2))
+point_cloud_to_csv(pc2, "test_data_of_most_variable_coordinates_with_labels.csv")
+point_cloud_to_csv_values_only(pc2, "test_data_of_most_variable_coordinates.csv")
+```
