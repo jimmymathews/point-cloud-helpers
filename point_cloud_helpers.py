@@ -350,27 +350,30 @@ class PointCloud:
 
 # Test code
 
-# a = Identifier("CRP","gene")
-# b = Identifier("IGF1R","gene")
-# c = Identifier("ACT1","gene")
-# d = Identifier("CASQ1","gene")
-# e = Identifier("CASQ2","gene")
-# l = Identifier("s1","sample")
-# m = Identifier("s2","sample")
-# n = Identifier("s3","sample")
-# o = Identifier("s4","sample")
-# p = Identifier("s5","sample")
+# l = Identifier("1s",  "time point")
+# m = Identifier("2s",  "time point")
+# n = Identifier("5s",  "time point")
+# o = Identifier("10s", "time point")
+# p = Identifier("100s","time point")
+# a = Identifier("temperature",   "measurement")
+# b = Identifier("pressure",      "measurement")
+# c = Identifier("concentration", "measurement")
+# d = Identifier("tastiness",     "measurement")
+# e = Identifier("greenness",     "measurement")
+
 # g1=IdentifierGroup([l,m,n,o,p])
 # g2=IdentifierGroup([a,b,c,d,e])
+
 # data = np.array([[2,3,4,5,0],[0,1,0,1,0],[3,2,3,4,5],[11,12,13,14,15],[0,-1,-1,-1,-1]])
 # pc = PointCloud(g1,g2,data)
-# pc2 = pc.restrict_to(IdentifierGroup([a,b,e]))
-# pc3 = pc.restrict_to(IdentifierGroup([m,n]))
 # pc.coordinate_ids.show()
 # pc.point_ids.show()
-# pc3.point_ids.show()
 # print(pc.data)
+
+# pc2 = pc.restrict_to(IdentifierGroup([m,n]))
+# pc2.point_ids.show()
 # print(pc3.data)
+
 # pc.most_variable_spatial_coordinates(3).show()
 
 
@@ -488,7 +491,7 @@ def point_cloud_to_csv_values_only(pc, filename):
 
 # Test code
 
-# pc = point_cloud_from_csv("test_data/full_data_set.csv", "samples", "genes")
+# pc = point_cloud_from_csv("test_data/full_data_set.csv", "samples", "properties")
 # pc.data
 # pc.point_ids.show()
 # pc.coordinate_ids.show()
