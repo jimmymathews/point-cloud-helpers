@@ -16,8 +16,9 @@ The main functions are
 Usage
 -----
 
+## Test restricting/subsetting and display
+
 ```
-# Test restricting/subsetting and display
 l = Identifier("1s",  "time point")
 m = Identifier("2s",  "time point")
 n = Identifier("5s",  "time point")
@@ -43,9 +44,11 @@ pc2.point_ids.show()
 print(pc3.data)
 
 pc.most_variable_spatial_coordinates(3).show()
+```
 
+## Test loading
 
-# Test loading
+```
 pc = point_cloud_from_csv("test_data/full_data_set.csv", "samples", "properties")
 pc.data
 pc.point_ids.show()
@@ -55,9 +58,11 @@ pc = point_cloud_from_csvs("test_data/raw_values.csv","test_data/labels1.csv","t
 pc2=pc.restrict_to(IdentifierGroup([Identifier("S4","labels2"),Identifier("S5","labels2")]))
 pc2.point_ids.show()
 pc2.coordinate_ids.show()
+```
 
+## Test loading grouping/clustering
 
-# Test loading grouping/clustering
+```
 a, grouping = load_grouping("test_data/clusters.csv", "samples")
 print("Whole list:")
 a.show()
