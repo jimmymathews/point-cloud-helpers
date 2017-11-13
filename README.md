@@ -4,6 +4,7 @@ The file `point_cloud_helpers.py` contains simple code for loading a multi-varia
 The main data structures are the classes `Identifier`, `IdentifierGroup`, and `PointCloud`.
 The main functions are
 
+  - `IdentifierGroup`'s `intersect`, `union`, and `complement`
   - `PointCloud`'s `restrict_to(IdentifierGroup)`
   - `PointCloud`'s `least_variable_spatial_coordinates(N)`, `most_variable_spatial_coordinates(N)`, etc.
   - `point_cloud_from_csvs(data_file, point_ids_file, coordinate_ids_file)`
