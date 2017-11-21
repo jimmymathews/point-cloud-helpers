@@ -1,7 +1,10 @@
 # -*- coding: UTF-8 -*-
 import numpy as np
+import csv
+import re
 import colorama
 colorama.init(autoreset=True)
+
 
 '''
 This file contains simple code for loading a multi-variate dataset from CSV, labelling
@@ -18,6 +21,28 @@ The main functions are
 'Test code' follows each main chunk.
 '''
 
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = '\r')
+    # Print New Line on Complete
+    if iteration == total: 
+        print()
+
+
+
 class Identifier:
     '''
     An Identifier encapsulates a "dimension" of a data set. For example, a "case" or "sample" ID number,
@@ -33,7 +58,8 @@ class Identifier:
         self.label = label
         self.type_name = type_name
         self.annotations = []
-    
+        self.marked_for_deletion = False
+
     def equals(self,other):
         return (self.label == other.label)
 
@@ -48,6 +74,15 @@ class Identifier:
 
     def show(self):
         print(self.to_string())
+
+
+def raw_values_from_csv(filename):
+    values = []
+    with open(filename, 'r') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',')
+        for row in reader:
+            values.append(row)
+    return values
 
 
 class IdentifierGroup:
@@ -70,6 +105,23 @@ class IdentifierGroup:
     def show(self):
         for i in self.ids:
             i.show()
+
+    def consider_new_name(self, old_name, new_name):
+        for i in self.ids:
+            if(i.label == old_name):
+                i.label = new_name
+
+    def get_new_names(self, correspondence_file):
+        '''
+        Changes the names of the Identifier objects of self.ids, according to the pairs in the CSV file correspondence_file.
+        The order the columns appear in the CSV file doesn't matter.
+        '''
+        values = raw_values_from_csv(correspondence_file)
+        ttl = len(values)
+        for i,value in enumerate(values):
+            self.consider_new_name(value[0], value[1])
+            printProgressBar(i,ttl, suffix = " Changing names...")
+        print("")
 
     def add(self, identifier):
         if(not self.contains(identifier)):
@@ -229,17 +281,23 @@ class PointCloud:
         if(len(intersection.ids)==0):
             print("Error, no intersection.")
             return
-
+        
+        ttl = len(intersection.ids)
+        i = 0
         if(modifying == "points"):
             iterator = iter(intersection.ids)
             new_pc = self.get_data_of(next(iterator))
             for additional_label in iterator:
                 new_pc.concatenate_rows(self.get_data_of(additional_label))
+                i = i + 1
+                printProgressBar(i,ttl,suffix=" "+str(i))
         if(modifying == "coordinates"):
             iterator = iter(intersection.ids)
             new_pc = self.get_data_of(next(iterator))
             for additional_label in iterator:
                 new_pc.concatenate_cols(self.get_data_of(additional_label))
+                i = i + 1
+                printProgressBar(i,ttl,suffix=" "+str(i))
         return new_pc
 
     def first_name(self):
@@ -377,9 +435,6 @@ class PointCloud:
 # pc.most_variable_spatial_coordinates(3).show()
 
 
-import csv
-import re
-
 def main_name(filename):
     '''
     Gets the extension-less version of the filename.
@@ -425,17 +480,10 @@ def point_cloud_from_csvs(data_file, names1_file, names2_file):
     for i in range(0,len(values)):
         for j in range(0,len(values[0])):
             numerical_values[i].append(float(values[i][j]))
+        printProgressBar(i,len(values))
+    print("")
     npa = np.array(numerical_values)
     return PointCloud(g1,g2,npa)
-
-def raw_values_from_csv(filename):
-    values = []
-    with open(filename, 'r') as csvfile:
-        reader = csv.reader(csvfile, delimiter=',')
-        for row in reader:
-            values.append(row)
-    return values
-
 
 def point_cloud_from_csv(filename, type1, type2):
     values = raw_values_from_csv(filename)
@@ -445,6 +493,8 @@ def point_cloud_from_csv(filename, type1, type2):
     for i in range(1,len(values)):
         for j in range(1,len(values[0])):
             numerical_values[i-1].append(float(values[i][j]))
+        printProgressBar(i,len(values))
+    print(i)
     npa = np.array(numerical_values)
     
     identifiers1 = []
@@ -543,6 +593,20 @@ def load_grouping(filename, type_name):
                 g.append(i)
         identifiers_groups.append(g)
     return [group_all, [IdentifierGroup(g) for g in identifiers_groups]]
+
+def load_single_group(filename, type_name):
+    values = raw_values_from_csv(filename)
+    number_of_points = len(values)
+
+    ids = []
+
+    for row in values:
+        ids.append(row[0])
+
+    ga = [Identifier(identifier, type_name) for identifier in ids]
+    return IdentifierGroup(ga)
+
+
 
 # Test code
 
