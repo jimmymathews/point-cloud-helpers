@@ -236,13 +236,14 @@ class PointCloud:
         if(modifying == "points"):
             for i in range(0, len(focus_identifiers.ids)):
                 if(focus_identifiers.ids[i].equals(identifier)):
-                    vector = [self.data[i]]
+                    vector = [self.data[i]]  #always gets the first one, in case there are repeated identifiers
+                    break
         if(modifying == "coordinates"):
             for j in range(0, len(focus_identifiers.ids)):
                 if(focus_identifiers.ids[j].equals(identifier)):
                     for i in range(0, len(self.data)):
                         vector.append([self.data[i,j]])
-                    continue
+                    break  #always gets the first occurence
         nparray = np.array(vector)
 
         pc = []
