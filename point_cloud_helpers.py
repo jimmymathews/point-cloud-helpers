@@ -114,7 +114,7 @@ class IdentifierGroup:
     def get_new_names(self, correspondence_file):
         '''
         Changes the names of the Identifier objects of self.ids, according to the pairs in the CSV file correspondence_file.
-        The order the columns appear in the CSV file doesn't matter.
+        The order the columns appear in the CSV file currently still matters (first column is lookup key, second column is replacement).
         '''
         values = raw_values_from_csv(correspondence_file)
         ttl = len(values)
@@ -175,6 +175,12 @@ class PointCloud:
             print("Warning! Number of points is "+str(self.number_of_points())+" but you provided "+str(len(self.point_ids.ids))+" IDs for them.")
         if(self.number_of_dimensions() != len(self.coordinate_ids.ids)):
             print("Warning! Number of coordinates is "+str(self.number_of_dimensions())+" but you provided "+str(len(self.coordinate_ids.ids))+" IDs for them.")
+
+    def transpose(self):
+        self.data = self.data.transpose()
+        swap = self.point_ids
+        self.point_ids = self.coordinate_ids
+        self.coordinate_ids = swap 
 
     def be_quiet(self):
         self.quiet = True
@@ -618,3 +624,25 @@ def load_single_group(filename, type_name):
 # for g in grouping:
 #     g.show()
 #     print("")
+
+
+
+
+
+
+
+# # A short transposition script; feed it a list of CSV files at the command line (formatted as expected by point_cloud_from_csv)
+# import sys
+
+# filenames = sys.argv[1:]
+# for filename in filenames:
+#     print("Transposing "+filename)
+#     pc = point_cloud_from_csv(filename,"A","B")
+#     pc.transpose()
+#     point_cloud_to_csv(pc,filename)
+
+
+
+
+
+
