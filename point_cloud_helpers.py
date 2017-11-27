@@ -61,7 +61,7 @@ class Identifier:
         self.marked_for_deletion = False
 
     def equals(self,other):
-        return (self.label == other.label)
+        return (self.label.upper() == other.label.upper())
 
     def add_annotation(self, ann):
         self.annotations.append(ann)
