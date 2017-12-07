@@ -102,9 +102,11 @@ class IdentifierGroup:
     def type_name(self):
         return self.ids[0].type_name
 
-    def show(self):
-        for i in self.ids:
+    def show(self, N=-1):
+        for n,i in enumerate(self.ids):
             i.show()
+            if(N !=-1 and n>=N):
+                break
 
     def consider_new_name(self, old_name, new_name):
         for i in self.ids:
@@ -159,6 +161,12 @@ class IdentifierGroup:
                 complement.append(identifier)
         return IdentifierGroup(complement)
 
+    def lookup_index(self, identifier):
+        for i,other in enumerate(self.ids):
+            if(other.equals(identifier)):
+                return i
+        return -1
+
 
 class PointCloud:
     '''
@@ -175,6 +183,16 @@ class PointCloud:
             print("Warning! Number of points is "+str(self.number_of_points())+" but you provided "+str(len(self.point_ids.ids))+" IDs for them.")
         if(self.number_of_dimensions() != len(self.coordinate_ids.ids)):
             print("Warning! Number of coordinates is "+str(self.number_of_dimensions())+" but you provided "+str(len(self.coordinate_ids.ids))+" IDs for them.")
+
+    def unit_normalize(self):
+        mins = [self.data[:,j].min()  for j in range(0,len(self.data[0]))]
+        maxs = [self.data[:,j].max()  for j in range(0,len(self.data[0]))]
+        means =[self.data[:,j].mean() for j in range(0,len(self.data[0]))] 
+        temp_data = np.zeros(self.data.shape)
+        for i in range(0,len(self.data)):
+            for j in range(0,len(self.data[i])):
+                temp_data[i,j] = (self.data[i,j]-means[j])/(maxs[j] - mins[j])
+        self.data = temp_data
 
     def transpose(self):
         self.data = self.data.transpose()
@@ -253,6 +271,25 @@ class PointCloud:
             pc = PointCloud(unmodified_identifiers,IdentifierGroup([identifier]),nparray, quiet = self.quiet)
         return pc
 
+    def reorder_points(self, identifier_group):
+        # if(not (self.point_ids.contains_subset(identifier_group) and identifier_group.contains_subset(self.point_ids))):
+        #     print("List for new ordering of points doesn't match the original list.")        
+        #     return
+
+        print("Looking up...")
+
+        new_indices_by_old = []
+        for i,identifier in enumerate(identifier_group.ids):
+            new_indices_by_old.append(self.point_ids.lookup_index(identifier))
+            printProgressBar(i,len(identifier_group.ids))
+
+        vals = []
+        print("Done.")
+        for i, new_index in enumerate(new_indices_by_old):
+            vals.append(self.data[new_index])
+        self.point_ids = identifier_group
+        self.data = np.array(vals)
+
     def concatenate_rows(self, pc):
         #Assumes that column identifiers are equal.
         self.data = np.concatenate((self.data,pc.data),0)
@@ -288,7 +325,7 @@ class PointCloud:
         if(len(intersection.ids)==0):
             print("Error, no intersection.")
             return
-        
+            
         ttl = len(intersection.ids)
         i = 0
         if(modifying == "points"):
@@ -297,14 +334,14 @@ class PointCloud:
             for additional_label in iterator:
                 new_pc.concatenate_rows(self.get_data_of(additional_label))
                 i = i + 1
-                printProgressBar(i,ttl,suffix=" "+str(i))
+                printProgressBar(i+1,ttl,suffix=" "+str(i))
         if(modifying == "coordinates"):
             iterator = iter(intersection.ids)
             new_pc = self.get_data_of(next(iterator))
             for additional_label in iterator:
                 new_pc.concatenate_cols(self.get_data_of(additional_label))
                 i = i + 1
-                printProgressBar(i,ttl,suffix=" "+str(i))
+                printProgressBar(i+1,ttl,suffix=" "+str(i))
         return new_pc
 
     def first_name(self):
@@ -487,7 +524,7 @@ def point_cloud_from_csvs(data_file, names1_file, names2_file):
     for i in range(0,len(values)):
         for j in range(0,len(values[0])):
             numerical_values[i].append(float(values[i][j]))
-        printProgressBar(i,len(values))
+        printProgressBar(i+1,len(values))
     print("")
     npa = np.array(numerical_values)
     return PointCloud(g1,g2,npa)
@@ -500,8 +537,31 @@ def point_cloud_from_csv(filename, type1, type2):
     for i in range(1,len(values)):
         for j in range(1,len(values[0])):
             numerical_values[i-1].append(float(values[i][j]))
-        printProgressBar(i,len(values))
-    print(i)
+        printProgressBar(i+1,len(values))
+    npa = np.array(numerical_values)
+    
+    identifiers1 = []
+    for label in labels1:
+        identifiers1.append(Identifier(label, type1))
+    g1 = IdentifierGroup(identifiers1)
+
+    identifiers2 = []
+    for label in labels2:
+        identifiers2.append(Identifier(label, type2))
+    g2 = IdentifierGroup(identifiers2)
+
+    return PointCloud(g1,g2,npa)
+
+def point_cloud_from_raw_csv(filename, type1, type2):
+    values = raw_values_from_csv(filename)
+    labels1 = [str(i) for i in range(0,len(values))]
+    labels2 = [str(j) for j in range(0,len(values[0])) ]
+    numerical_values = [[float(val) for val in row] for row in values]
+    # for i in range(1,len(values)):
+    #     for j in range(1,len(values[0])):
+    #         numerical_values[i-1].append(float(values[i][j]))
+    #     printProgressBar(i,len(values))
+    # print(i)
     npa = np.array(numerical_values)
     
     identifiers1 = []
