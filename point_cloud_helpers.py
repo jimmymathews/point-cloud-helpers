@@ -60,8 +60,21 @@ class Identifier:
         self.annotations = []
         self.marked_for_deletion = False
 
+    def copy(self):
+        cpy = Identifier(self.label, self.type_name)
+        cpy.annotations = [a for a in self.annotations]
+        return cpy
+
     def equals(self,other):
-        return (self.label == other.label)
+        synonyms1 = self.label.split('|')
+        synonyms2 = other.label.split('|')
+        for s1 in synonyms1:
+            for s2 in synonyms2:
+                if(s1 == s2):
+                    return True
+        # if(len(synonyms1)>1 or len(synonyms2)>1):
+        #     print(self.label + "   "+other.label)
+        return False
 
     def add_annotation(self, ann):
         self.annotations.append(ann)
@@ -95,6 +108,9 @@ class IdentifierGroup:
         ids should be a list of Identifiers.
         '''
         self.ids = ids
+
+    def copy(self):
+        return IdentifierGroup([identifier.copy() for identifier in self.ids])
 
     def __getitem__(self, key):
         return self.ids[key]
@@ -184,14 +200,29 @@ class PointCloud:
         if(self.number_of_dimensions() != len(self.coordinate_ids.ids)):
             print("Warning! Number of coordinates is "+str(self.number_of_dimensions())+" but you provided "+str(len(self.coordinate_ids.ids))+" IDs for them.")
 
-    def unit_normalize(self):
+    def variance_normalize(self):
+        stddevs = np.std(self.data, axis = 0)
+        for i in range(0,len(self.data)):
+            for j in range(0,len(self.data[i])):
+                if(stddevs[j] != 0):
+                    self.data[i,j] = self.data[i,j]/(1.0*stddevs[j])
+                else:
+                    self.data[i,j] = 1.0
+
+    def log_normalize(self):
+        self.data = np.log(self.data + 1)
+
+    def max_min_normalize(self, fac=1.0):
         mins = [self.data[:,j].min()  for j in range(0,len(self.data[0]))]
         maxs = [self.data[:,j].max()  for j in range(0,len(self.data[0]))]
-        means =[self.data[:,j].mean() for j in range(0,len(self.data[0]))] 
+        # means =[self.data[:,j].mean() for j in range(0,len(self.data[0]))] 
         temp_data = np.zeros(self.data.shape)
         for i in range(0,len(self.data)):
             for j in range(0,len(self.data[i])):
-                temp_data[i,j] = (self.data[i,j]-means[j])/(maxs[j] - mins[j])
+                if(maxs[j] - mins[j] !=0 ):
+                    temp_data[i,j] = fac*(self.data[i,j]-mins[j])/(maxs[j] - mins[j])
+                else:
+                    temp_data[i,j] = maxs[j]                    
         self.data = temp_data
 
     def transpose(self):
@@ -301,7 +332,7 @@ class PointCloud:
         self.coordinate_ids.ids = self.coordinate_ids.ids + pc.coordinate_ids.ids
  
     def restrict_to(self, subset):
-        #Return PointCloud's data is ordered in same way as the ids of subset.
+        # Return PointCloud's data is ordered in same way as the ids of subset.
         if((not self.point_ids[0].type_name == subset[0].type_name) and
            (not self.coordinate_ids[0].type_name == subset[0].type_name) ):
             print("Data set doesn't have dimensions of type " + subset[0].type_name + "... *"+self.point_ids[0].type_name+","+self.coordinate_ids[0].type_name +"*")
@@ -483,7 +514,7 @@ def main_name(filename):
     '''
     Gets the extension-less version of the filename.
     '''
-    return re.compile("[\\w\\d]+/?([\\w\\d]+)\.[\\w\\d]+").match(filename).group(1)
+    return re.compile("([\\w\\d]+)\.[\\w\\d]+").match(filename).group(1)
 
 def labels_from_csv(filename):
     labels = []
