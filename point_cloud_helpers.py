@@ -5,6 +5,8 @@ import re
 import colorama
 colorama.init(autoreset=True)
 
+from pympler.tracker import SummaryTracker
+tracker = SummaryTracker()
 
 '''
 This file contains simple code for loading a multi-variate dataset from CSV, labelling
@@ -95,6 +97,7 @@ def raw_values_from_csv(filename):
         reader = csv.reader(csvfile, delimiter=',')
         for row in reader:
             values.append(row)
+    # tracker.print_diff()
     return values
 
 
@@ -135,11 +138,21 @@ class IdentifierGroup:
         The order the columns appear in the CSV file currently still matters (first column is lookup key, second column is replacement).
         '''
         values = raw_values_from_csv(correspondence_file)
-        ttl = len(values)
-        for i,value in enumerate(values):
-            self.consider_new_name(value[0], value[1])
-            printProgressBar(i,ttl, suffix = " Changing names...")
-        print("")
+        dictionary = {}
+        for row in values:
+            dictionary[row[0]] = row[1]
+        for identifier in self.ids:
+            l = identifier.label
+            if(l in dictionary):
+                identifier.label = dictionary[l]
+            else:
+                print("Error: "+l+" not in lookup table.")
+
+        # ttl = len(values)
+        # for i,value in enumerate(values):
+        #     self.consider_new_name(value[0], value[1])
+        #     printProgressBar(i,ttl, suffix = " Changing names...")
+        # print("")
 
     def add(self, identifier):
         if(not self.contains(identifier)):
@@ -330,6 +343,24 @@ class PointCloud:
         #Assumes that row identifiers are equal.
         self.data = np.concatenate((self.data,pc.data),1)
         self.coordinate_ids.ids = self.coordinate_ids.ids + pc.coordinate_ids.ids
+
+    def uniquize_coordinates(self):
+        # identifier_strings_set = set([identifier.label for identifier in self.coordinate_ids.ids])
+        accounted_for = set()
+        index_list = []
+        for i, identifier in enumerate(self.coordinate_ids.ids):
+            if(identifier.label not in accounted_for):
+                accounted_for.add(identifier.label)
+                index_list.append(i)
+
+        new_data_list = []
+        new_ids = []
+        for i in index_list:
+            new_data_list.append(self.data[:,i:(i+1)])
+            new_ids.append(self.coordinate_ids.ids[i])
+
+        self.data = np.concatenate(new_data_list, 1) #1?
+        self.coordinate_ids = IdentifierGroup(new_ids)
  
     def restrict_to(self, subset):
         # Return PointCloud's data is ordered in same way as the ids of subset.
