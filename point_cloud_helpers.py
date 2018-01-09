@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import numpy as np
 import csv
+csv.field_size_limit(sys.maxsize)
 import re
 import colorama
 colorama.init(autoreset=True)
