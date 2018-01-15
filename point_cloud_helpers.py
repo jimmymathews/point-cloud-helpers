@@ -213,6 +213,18 @@ class PointCloud:
         if(self.number_of_dimensions() != len(self.coordinate_ids.ids)):
             print("Warning! Number of coordinates is "+str(self.number_of_dimensions())+" but you provided "+str(len(self.coordinate_ids.ids))+" IDs for them.")
 
+    def dichotomize_normalize(self):
+        stddevs = np.std(self.data, axis = 0)
+        means = np.mean(self.data, axis = 0)
+        for i in range(0,len(self.data)):
+            for j in range(0,len(self.data[i])):
+                if(stddevs[j] != 0):
+                    self.data[i,j] = 0.5+(self.data[i,j]-means[j])/(2.0*stddevs[j])
+                    if(self.data[i,j]<0.0):
+                        self.data[i,j] = 0.0
+                else:
+                    self.data[i,j] = 0.00 # this should never run?
+
     def variance_normalize(self):
         stddevs = np.std(self.data, axis = 0)
         for i in range(0,len(self.data)):
