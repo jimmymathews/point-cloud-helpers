@@ -597,11 +597,12 @@ def point_cloud_from_csv(filename, type1, type2):
     values = raw_values_from_csv(filename)
     labels1 = [values[i][0] for i in range(1,len(values))]
     labels2 = [values[0][i] for i in range(1,len(values[0]))]    
-    numerical_values = [[] for i in range(len(values)-1)]
-    for i in range(1,len(values)):
-        for j in range(1,len(values[0])):
-            numerical_values[i-1].append(float(values[i][j]))
-        printProgressBar(i+1,len(values))
+    numerical_values = [[float(elt) for elt in row[1:]] for row in values[1:]]
+    # numerical_values = [[] for i in range(len(values)-1)]
+    # for i in range(1,len(values)):
+    #     for j in range(1,len(values[0])):
+    #         numerical_values[i-1].append(float(values[i][j]))
+    #     printProgressBar(i+1,len(values))
     npa = np.array(numerical_values)
     
     identifiers1 = []
