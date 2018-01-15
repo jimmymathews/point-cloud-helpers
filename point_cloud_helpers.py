@@ -702,7 +702,7 @@ def contains(label, l):
             return True
     return False
 
-def load_grouping(filename, type_name):
+def load_grouping(filename, type_name, column_number = 2):
     '''
     Returns a list of IdentifierGroups, one for each among the group names across all label / group name
     pairs in the CSV file filename.
@@ -710,8 +710,8 @@ def load_grouping(filename, type_name):
     values = raw_values_from_csv(filename)
     number_of_points = len(values)
     number_of_columns = len(values[0])
-    if(number_of_columns != 2):
-        print("Need one column of identifiers and one column of grouping names.")
+    if(number_of_columns < 2):
+        print("Need one column of identifiers and at least one column of grouping names.")
         return
 
     ids = []
@@ -720,9 +720,9 @@ def load_grouping(filename, type_name):
 
     for row in values:
         ids.append(row[0])
-        annotations.append(row[1])
-        if(not contains(row[1],labels)):
-            labels.append(row[1])
+        annotations.append(row[column_number-1])
+        if(not contains(row[column_number-1],labels)):
+            labels.append(row[column_number-1])
 
     ga = [Identifier(identifier, type_name) for identifier in ids]
     for i, annotation in enumerate(annotations):
