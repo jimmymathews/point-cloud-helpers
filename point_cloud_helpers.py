@@ -76,8 +76,6 @@ class Identifier:
             for s2 in synonyms2:
                 if(s1 == s2):
                     return True
-        # if(len(synonyms1)>1 or len(synonyms2)>1):
-        #     print(self.label + "   "+other.label)
         return False
 
     def add_annotation(self, ann):
@@ -108,11 +106,15 @@ class IdentifierGroup:
     An IdentifierGroup encapsulates a collection of dimensions of a point-cloud-type data set.
     It mainly stores the Identifiers of the rows (or columns) of some unspecified data set. 
     '''
-    def __init__(self, ids):
+    def __init__(self, ids, name = "unnamed"):
         '''
         ids should be a list of Identifiers.
         '''
         self.ids = ids
+        if(name == "unnamed" and len(ids)>0 and len(ids[0].annotations)>0):
+            self.name = ids[0].annotations[0] # just a guess
+        else:
+            self.name = name
 
     def copy(self):
         return IdentifierGroup([identifier.copy() for identifier in self.ids])
@@ -161,12 +163,17 @@ class IdentifierGroup:
             self.ids.append(identifier)
 
     def contains(self, other_id):
+        # Also very slow...
+
+        # if(other_id.label in [identifier.label for identifier in self.ids]):
+        #     return True        
         for identifier in self.ids:
             if(identifier.equals(other_id)):
                 return True
         return False
 
     def contains_subset(self, other_group):
+        # Currently very slow...
         for other_id in other_group.ids:
             if(not self.contains(other_id)):
                 return False
@@ -703,7 +710,9 @@ def contains(label, l):
     return False
 
 def load_all_groupings(filename, type_name):
-    values = raw_values_from_csv(filename)
+    all_rows = raw_values_from_csv(filename)
+    header = all_rows[0][1:]
+    values = all_rows[1:]
     number_of_points = len(values)
     number_of_columns = len(values[0])
     if(number_of_columns < 2):
@@ -712,14 +721,13 @@ def load_all_groupings(filename, type_name):
 
     ids = []
     all_annotations = []
-    all_labels = []
+    all_labels = [[] for i in range(0,number_of_columns-1)]
 
     # Populate list of ids and annotations (one per input file line), and unique list of labels
     for row in values:
         ids.append(row[0])
         all_annotations.append(row[1:])
         for i,entry in enumerate(row[1:]):
-            all_labels.append([])
             if(not contains(entry,all_labels[i])):
                 all_labels[i].append(entry)
 
@@ -737,13 +745,13 @@ def load_all_groupings(filename, type_name):
             group_ids = []
             for identifier in all_ids:
                 # print("If "+label+ " in "+identifier.annotations[0] + "," + identifier.annotations[1]+ " ...")
-                if(label in identifier.annotations):
+                if(label == identifier.annotations[i]):
                     group_ids.append(identifier)
-            identifiers_groups.append(group_ids)
-        grouping = [IdentifierGroup(group_ids) for group_ids in identifiers_groups]
+            identifiers_groups.append([group_ids,label])
+        grouping = [IdentifierGroup(group_ids, name = name) for group_ids,name in identifiers_groups]
         all_groupings.append(grouping)
 
-    return [group_all, all_groupings]
+    return [group_all, all_groupings, header]
 
 
 def load_grouping(filename, type_name, column_number = 2):
