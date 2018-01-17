@@ -702,6 +702,50 @@ def contains(label, l):
             return True
     return False
 
+def load_all_groupings(filename, type_name):
+    values = raw_values_from_csv(filename)
+    number_of_points = len(values)
+    number_of_columns = len(values[0])
+    if(number_of_columns < 2):
+        print("Need one column of identifiers and at least one column of grouping names.")
+        return
+
+    ids = []
+    all_annotations = []
+    all_labels = []
+
+    # Populate list of ids and annotations (one per input file line), and unique list of labels
+    for row in values:
+        ids.append(row[0])
+        all_annotations.append(row[1:])
+        for i,entry in enumerate(row[1:]):
+            all_labels.append([])
+            if(not contains(entry,all_labels[i])):
+                all_labels[i].append(entry)
+
+    # Tag each id with its corresponding annotation
+    all_ids = [Identifier(identifier, type_name) for identifier in ids]
+
+    for i, annotations in enumerate(all_annotations):
+        all_ids[i].annotations = annotations
+    group_all = IdentifierGroup(all_ids)
+
+    all_groupings = []
+    for i in range(0,number_of_columns-1):
+        identifiers_groups = []
+        for label in all_labels[i]:
+            group_ids = []
+            for identifier in all_ids:
+                # print("If "+label+ " in "+identifier.annotations[0] + "," + identifier.annotations[1]+ " ...")
+                if(label in identifier.annotations):
+                    group_ids.append(identifier)
+            identifiers_groups.append(group_ids)
+        grouping = [IdentifierGroup(group_ids) for group_ids in identifiers_groups]
+        all_groupings.append(grouping)
+
+    return [group_all, all_groupings]
+
+
 def load_grouping(filename, type_name, column_number = 2):
     '''
     Returns a list of IdentifierGroups, one for each among the group names across all label / group name
